@@ -59,3 +59,18 @@ export interface Change {
   verification: Verification;
   sourceUrl: string;
 }
+
+/** 按量计费的 API 模型，价格单位：美元 / 百万 token。 */
+export interface ApiModel {
+  id: string;
+  vendor: string;
+  model: string;
+  inputPer1M: number;
+  /** 缓存命中的输入价；厂商未公布或未核实时省略，计算时按普通输入价。 */
+  cachedInputPer1M?: number;
+  outputPer1M: number;
+  note?: string;
+  verification: Verification;
+  sourceUrl: string;
+  checkedAt: string;
+}

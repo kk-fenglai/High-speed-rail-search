@@ -19,6 +19,10 @@
   --tier-2: #3987e5;
   --tier-3: #1c5cab;
   --tier-4: #0d366b;
+
+  /* API 图的两个系列：分类色板第 1、2 槽 */
+  --series-in: #2a78d6;
+  --series-out: #eb6834;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,6 +43,8 @@
     --tier-2: #2a78d6;
     --tier-3: #6da7ec;
     --tier-4: #b7d3f6;
+    --series-in: #3987e5;
+    --series-out: #d95926;
   }
 }
 
@@ -59,6 +65,8 @@
   --tier-2: #2a78d6;
   --tier-3: #6da7ec;
   --tier-4: #b7d3f6;
+  --series-in: #3987e5;
+  --series-out: #d95926;
 }
 
 * {
@@ -614,4 +622,94 @@ footer {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* 首页视图切换 */
+.tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  margin: 12px 0 8px;
+}
+.tabs button {
+  border: none;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.tabs button[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* API 哑铃图 */
+.dumb-track {
+  position: relative;
+  height: 30px;
+  border-left: 1px solid var(--axis);
+}
+.dumb-track .gridline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--grid);
+}
+.dumb-line {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: var(--axis);
+}
+.dumb-dot {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.dot-key {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* 订阅 vs API 计算器 */
+.calc-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .calc-inputs {
+    grid-template-columns: 1fr;
+  }
+}
+.calc-inputs label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.calc-inputs input,
+.calc-inputs select {
+  font: inherit;
+  font-size: 15px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  width: 100%;
 }
