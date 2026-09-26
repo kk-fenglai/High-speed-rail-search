@@ -3,3 +3,6 @@ node_modules/
 out/
 next-env.d.ts
 *.tsbuildinfo
+
+# 变更发现管道的失败计数，放在 Actions 缓存里，不进仓库
+pipeline/state.json

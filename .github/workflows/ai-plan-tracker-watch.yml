@@ -1,0 +1,88 @@
+# 变更发现管道（PRD P0-6）：每 6 小时抓取一次官方定价页。
+# 页面有变化时开一个 PR，里面是新快照和审核报告；合并 PR 就是人工审核这一步。
+# 任一页面连续 2 次抓取失败时，本次运行标记为失败，GitHub 会发通知。
+name: ai-plan-tracker pricing watch
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "只检查这些页面（逗号分隔的 source id，留空表示全部）"
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ai-plan-tracker-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-plan-tracker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ai-plan-tracker/package-lock.json
+      - run: npm ci
+
+      # 失败计数跨运行保存在缓存里；每次运行写一个新 key，恢复时取最近的一个
+      - name: Restore watcher state
+        uses: actions/cache/restore@v4
+        with:
+          path: ai-plan-tracker/pipeline/state.json
+          key: pricing-watch-state-${{ github.run_id }}
+          restore-keys: pricing-watch-state-
+
+      - name: Watch pricing pages
+        id: watch
+        env:
+          # 可选：配置后为每处变化生成 LLM 草稿
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # 通过环境变量传入，避免把手动输入直接拼进 shell 命令
+          ONLY: ${{ inputs.only }}
+        run: npm run watch -- ${ONLY:+--only "$ONLY"}
+
+      - name: Save watcher state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ai-plan-tracker/pipeline/state.json
+          key: pricing-watch-state-${{ github.run_id }}
+
+      - name: Open review PR
+        if: steps.watch.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: pricing-watch/updates
+          delete-branch: true
+          add-paths: |
+            ai-plan-tracker/pipeline/snapshots/**
+            ai-plan-tracker/pipeline/pending/**
+          commit-message: "pricing watch: update snapshots and review reports"
+          title: "定价页有更新，待审核"
+          body: |
+            变更发现管道检测到官方定价页有更新，审核报告在 `ai-plan-tracker/pipeline/pending/`。
+
+            审核步骤：
+            1. 逐份打开报告，对照原文确认变化是真实的（不是 A/B 实验或地区差异）。
+            2. 更新 `src/data/plans.ts`、`src/data/apiModels.ts`，并在 `src/data/changes.ts` 顶部加一条变更。
+            3. 审核完的报告可以删掉，再合并本 PR。
+
+            如果只是噪声，在 `pipeline/sources.ts` 给该页面加 `ignoreLines` 规则后合并。
+          labels: pricing-watch
+
+      - name: Alert on repeated failures
+        if: steps.watch.outputs.alert == 'true'
+        run: |
+          echo "::error::以下页面连续抓取失败：${{ steps.watch.outputs.alert_sources }}"
+          exit 1

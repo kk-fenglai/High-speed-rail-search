@@ -1,0 +1,32 @@
+name: ai-plan-tracker CI
+
+on:
+  push:
+    paths:
+      - "ai-plan-tracker/**"
+      - ".github/workflows/ai-plan-tracker-*.yml"
+  pull_request:
+    paths:
+      - "ai-plan-tracker/**"
+      - ".github/workflows/ai-plan-tracker-*.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-plan-tracker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ai-plan-tracker/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
